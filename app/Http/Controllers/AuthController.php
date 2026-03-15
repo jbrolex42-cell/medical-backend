@@ -25,7 +25,8 @@ class AuthController extends BaseController
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'phone' => 'required|string|unique:users,phone',
-            'role' => 'required|in:admin,dispatcher,paramedic,citizen'
+            'role' => 'required|in:admin,dispatcher,paramedic,citizen',
+            'subscribe' => 'nullable|boolean', // optional subscription
         ]);
 
         if (!empty($errors)) {
@@ -38,11 +39,11 @@ class AuthController extends BaseController
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
             'phone' => $data['phone'],
             'role' => $data['role'],
-            'is_active' => true
+            'is_active' => true,
+            'is_subscribed' => isset($data['subscribe']) ? (bool)$data['subscribe'] : false,
         ]);
 
         $token = $this->generateToken($user);
-
         unset($user->password);
 
         return $this->jsonResponse($response, [
@@ -86,11 +87,10 @@ class AuthController extends BaseController
         }
 
         $token = $this->generateToken($user);
-
         unset($user->password);
 
         return $this->jsonResponse($response, [
-            'user' => $user,
+            'user' => $user, // now includes is_subscribed
             'token' => $token
         ]);
     }
@@ -101,11 +101,10 @@ class AuthController extends BaseController
     public function me(Request $request, Response $response): Response
     {
         $user = $request->getAttribute('user');
-
         unset($user->password);
 
         return $this->jsonResponse($response, [
-            'user' => $user
+            'user' => $user, // includes is_subscribed
         ]);
     }
 
@@ -136,7 +135,8 @@ class AuthController extends BaseController
             'exp' => time() + (int)($_ENV['JWT_EXPIRATION'] ?? 3600),
             'sub' => $user->id,
             'email' => $user->email,
-            'role' => $user->role
+            'role' => $user->role,
+            'is_subscribed' => $user->is_subscribed, // include subscription in JWT if needed
         ];
 
         return JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');

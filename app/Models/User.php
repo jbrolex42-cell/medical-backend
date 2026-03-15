@@ -2,28 +2,38 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class User extends Model
+class User extends Authenticatable
 {
+    use HasFactory, Notifiable;
+
+    
     protected $fillable = [
         'name',
         'email',
         'password',
         'phone',
         'role',
-        'is_active'
+        'is_active',
+        'is_subscribed', 
     ];
 
+  
     protected $hidden = [
-        'password'
+        'password',
+        'remember_token',
     ];
 
+    
     protected $casts = [
         'is_active' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'is_subscribed' => 'boolean', 
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
     public function emergencies(): HasMany
